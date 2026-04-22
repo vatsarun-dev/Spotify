@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { pause, play } from "../state/musicPlayer";
+import { nextSong, pause, play, prevSong } from "../state/musicPlayer";
 
 const usePlayer = () => {
   const dispatch = useDispatch();
   const audioRef = useRef(new Audio());
-  const { currentPlayingSong, isPlaying } = useSelector(
-    (store) => store.player,
-  );
+  const { currentPlayingSong, isPlaying, currentIndex, songList, playedHistory } =
+    useSelector((store) => store.player);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
@@ -20,8 +19,14 @@ const usePlayer = () => {
     };
 
     const handleSongEnd = () => {
+      // When a song finishes, move to the next one if it exists.
+      if (currentIndex < songList.length - 1) {
+        dispatch(nextSong());
+        return;
+      }
+
       dispatch(pause());
-      setCurrentTime(0);
+      audio.currentTime = 0;
     };
 
     audio.addEventListener("timeupdate", syncProgress);
@@ -35,16 +40,14 @@ const usePlayer = () => {
       audio.removeEventListener("durationchange", syncProgress);
       audio.removeEventListener("ended", handleSongEnd);
     };
-  }, [dispatch]);
+  }, [currentIndex, dispatch, songList.length]);
 
   useEffect(() => {
     if (!currentPlayingSong) return;
 
     audioRef.current.src = currentPlayingSong.url;
     audioRef.current.currentTime = 0;
-    audioRef.current
-      .play()
-      .catch(() => dispatch(pause()));
+    audioRef.current.play().catch(() => dispatch(pause()));
   }, [currentPlayingSong, dispatch]);
 
   useEffect(() => {
@@ -68,15 +71,36 @@ const usePlayer = () => {
     }
   };
 
+  const goToNextSong = () => {
+    if (currentIndex < songList.length - 1) {
+      dispatch(nextSong());
+    }
+  };
+
+  const goToPrevSong = () => {
+    if (playedHistory.length) {
+      dispatch(prevSong());
+      return;
+    }
+
+    // If there is no older song in history, restart the current track.
+    audioRef.current.currentTime = 0;
+    setCurrentTime(0);
+  };
+
   const progress = duration ? Math.min((currentTime / duration) * 100, 100) : 0;
 
   return {
     currentPlayingSong,
     isPlaying,
+    currentIndex,
+    songList,
     currentTime,
     duration,
     progress,
     togglePlayAndPause,
+    goToNextSong,
+    goToPrevSong,
   };
 };
 

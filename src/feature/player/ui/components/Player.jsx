@@ -20,7 +20,11 @@ const Player = () => {
     currentTime,
     duration,
     progress,
+    currentIndex,
+    songList,
     togglePlayAndPause,
+    goToNextSong,
+    goToPrevSong,
   } = usePlayer();
 
   const thumbnail = currentPlayingSong?.thumbnail;
@@ -71,7 +75,9 @@ const Player = () => {
             <button
               type="button"
               aria-label="Previous track"
+              onClick={goToPrevSong}
               className="transition hover:text-white"
+              disabled={!currentPlayingSong}
             >
               <i className="ri-skip-back-fill text-2xl"></i>
             </button>
@@ -89,7 +95,9 @@ const Player = () => {
             <button
               type="button"
               aria-label="Next track"
+              onClick={goToNextSong}
               className="transition hover:text-white"
+              disabled={!currentPlayingSong || currentIndex >= songList.length - 1}
             >
               <i className="ri-skip-forward-fill text-2xl"></i>
             </button>

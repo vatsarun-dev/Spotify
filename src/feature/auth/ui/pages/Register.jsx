@@ -1,5 +1,11 @@
 import React from "react";
+import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
+import {
+  getAuthSession,
+  saveAuthSession,
+  saveRegisteredUser,
+} from "../../../../utils/authStorage";
 const authOptions = [
   {
     label: "Sign up with phone number",
@@ -57,7 +63,35 @@ const authOptions = [
 ];
 
 const Register = () => {
-  let navigate = useNavigate();
+  const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+    },
+  });
+
+  React.useEffect(() => {
+    if (getAuthSession()) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [navigate]);
+
+  const onSubmit = (values) => {
+    // Store the registered account so login can verify it later.
+    saveRegisteredUser(values);
+    saveAuthSession({
+      name: values.name,
+      email: values.email,
+    });
+    navigate("/dashboard", { replace: true });
+  };
+
   return (
     <main className="min-h-screen bg-[#121212] text-white">
       <div className="mx-auto flex min-h-screen w-full max-w-[1920px] flex-col">
@@ -83,7 +117,31 @@ const Register = () => {
                 start listening
               </h1>
 
-              <form className="mt-10 w-full space-y-5">
+              <form
+                className="mt-10 w-full space-y-5"
+                onSubmit={handleSubmit(onSubmit)}
+              >
+                <div className="space-y-2">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-bold text-white"
+                  >
+                    Full name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your name"
+                    {...register("name", {
+                      required: "Name is required",
+                    })}
+                    className="h-12 w-full rounded-md border border-white/35 bg-transparent px-3.5 text-[15px] text-white outline-none transition placeholder:text-white/55 hover:border-white/55 focus:border-white focus:ring-2 focus:ring-white/20"
+                  />
+                  {errors.name ? (
+                    <p className="text-sm text-[#ff8a8a]">{errors.name.message}</p>
+                  ) : null}
+                </div>
+
                 <div className="space-y-2">
                   <label
                     htmlFor="email"
@@ -95,8 +153,47 @@ const Register = () => {
                     id="email"
                     type="email"
                     placeholder="name@domain.com"
+                    {...register("email", {
+                      required: "Email is required",
+                      pattern: {
+                        value: /\S+@\S+\.\S+/,
+                        message: "Enter a valid email",
+                      },
+                    })}
                     className="h-12 w-full rounded-md border border-white/35 bg-transparent px-3.5 text-[15px] text-white outline-none transition placeholder:text-white/55 hover:border-white/55 focus:border-white focus:ring-2 focus:ring-white/20"
                   />
+                  {errors.email ? (
+                    <p className="text-sm text-[#ff8a8a]">
+                      {errors.email.message}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-bold text-white"
+                  >
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    placeholder="Create a password"
+                    {...register("password", {
+                      required: "Password is required",
+                      minLength: {
+                        value: 6,
+                        message: "Password must be at least 6 characters",
+                      },
+                    })}
+                    className="h-12 w-full rounded-md border border-white/35 bg-transparent px-3.5 text-[15px] text-white outline-none transition placeholder:text-white/55 hover:border-white/55 focus:border-white focus:ring-2 focus:ring-white/20"
+                  />
+                  {errors.password ? (
+                    <p className="text-sm text-[#ff8a8a]">
+                      {errors.password.message}
+                    </p>
+                  ) : null}
                 </div>
 
                 <button

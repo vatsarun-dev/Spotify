@@ -1,5 +1,11 @@
 import React from "react";
+import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
+import {
+  getAuthSession,
+  getRegisteredUser,
+  saveAuthSession,
+} from "../../../../utils/authStorage";
 
 const loginOptions = [
   {
@@ -70,7 +76,49 @@ const loginOptions = [
 ];
 
 const Login = () => {
-  let navigate = useNavigate();
+  const navigate = useNavigate();
+  const [loginError, setLoginError] = React.useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  React.useEffect(() => {
+    if (getAuthSession()) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [navigate]);
+
+  const onSubmit = (values) => {
+    const savedUser = getRegisteredUser();
+
+    if (!savedUser) {
+      setLoginError("No account found. Please register first.");
+      return;
+    }
+
+    if (
+      savedUser.email !== values.email ||
+      savedUser.password !== values.password
+    ) {
+      setLoginError("Invalid email or password.");
+      return;
+    }
+
+    setLoginError("");
+    saveAuthSession({
+      name: savedUser.name,
+      email: savedUser.email,
+    });
+    navigate("/dashboard", { replace: true });
+  };
+
   return (
     <main className="min-h-screen bg-[#121212] text-white">
       <div className="mx-auto flex min-h-screen w-full max-w-[1920px] flex-col">
@@ -94,7 +142,10 @@ const Login = () => {
                 Welcome back
               </h1>
 
-              <form className="mt-10 w-full space-y-5">
+              <form
+                className="mt-10 w-full space-y-5"
+                onSubmit={handleSubmit(onSubmit)}
+              >
                 <div className="space-y-2">
                   <label
                     htmlFor="email"
@@ -105,9 +156,47 @@ const Login = () => {
                   <input
                     id="email"
                     type="email"
+                    {...register("email", {
+                      required: "Email is required",
+                      pattern: {
+                        value: /\S+@\S+\.\S+/,
+                        message: "Enter a valid email",
+                      },
+                    })}
                     className="h-12 w-full rounded-md border border-white/35 bg-transparent px-3.5 text-[15px] text-white outline-none transition placeholder:text-white/55 hover:border-white/55 focus:border-white focus:ring-2 focus:ring-white/20"
                   />
+                  {errors.email ? (
+                    <p className="text-sm text-[#ff8a8a]">
+                      {errors.email.message}
+                    </p>
+                  ) : null}
                 </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-bold text-white"
+                  >
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    {...register("password", {
+                      required: "Password is required",
+                    })}
+                    className="h-12 w-full rounded-md border border-white/35 bg-transparent px-3.5 text-[15px] text-white outline-none transition placeholder:text-white/55 hover:border-white/55 focus:border-white focus:ring-2 focus:ring-white/20"
+                  />
+                  {errors.password ? (
+                    <p className="text-sm text-[#ff8a8a]">
+                      {errors.password.message}
+                    </p>
+                  ) : null}
+                </div>
+
+                {loginError ? (
+                  <p className="text-sm text-[#ff8a8a]">{loginError}</p>
+                ) : null}
 
                 <button
                   type="submit"

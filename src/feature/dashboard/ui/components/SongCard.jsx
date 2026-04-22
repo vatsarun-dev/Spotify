@@ -3,8 +3,8 @@ import "remixicon/fonts/remixicon.css";
 import useDashboard from "../../hook/useDashboard";
 import { playNewSong } from "../../../player/state/musicPlayer";
 
-const SongCard = ({ song }) => {
-  let { dispatch } = useDashboard();
+const SongCard = ({ song, songs, index }) => {
+  const { dispatch } = useDashboard();
   if (!song) return null;
 
   const { title, artist, album, year, thumbnail } = song;
@@ -19,9 +19,9 @@ const SongCard = ({ song }) => {
         />
 
         <button
-          // `playNewSong` must be imported from the player slice.
-          // Without that import, clicking play throws "playNewSong is not defined".
-          onClick={() => dispatch(playNewSong(song))}
+          // Pass the full list and clicked index so the player can support
+          // next/previous navigation from the same queue.
+          onClick={() => dispatch(playNewSong({ songs, index }))}
           className="absolute bottom-3 right-3 flex h-12 w-12 translate-y-3 items-center justify-center rounded-full bg-[#1ed760] text-black opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100"
           type="button"
           aria-label={`Play ${title}`}

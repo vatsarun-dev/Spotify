@@ -1,7 +1,19 @@
 import React from "react";
 import "remixicon/fonts/remixicon.css";
+import { useNavigate } from "react-router";
+import { clearAuthSession, getAuthSession } from "../../../../utils/authStorage";
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const currentUser = getAuthSession();
+
+  const handleLogout = () => {
+    // Clear only the active login session so the registered user can log in again.
+    localStorage.removeItem("spotifyAuthSession");
+    clearAuthSession();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <header className="fixed inset-x-0 top-0 z-40 h-20 border-b border-white/10 bg-black px-4 sm:px-6 lg:px-7">
       <div className="mx-auto flex h-full max-w-[1920px] items-center justify-between gap-4">
@@ -33,6 +45,15 @@ const Navbar = () => {
           <button className="rounded-2xl bg-white px-3 py-2 text-sm font-bold text-black">
             Explore premium
           </button>
+          {currentUser ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-2xl border border-white/15 px-3 py-2 text-sm font-bold text-white transition hover:bg-white/10"
+            >
+              Logout
+            </button>
+          ) : null}
           <i className="ri-notification-3-line text-xl text-[#b1b1b1]"></i>
           <i className="ri-user-line text-xl text-white"></i>
         </div>
